@@ -4,12 +4,16 @@ import TileModal from './TileModal';
 import Tile from './Tile';
 import { ChartBarIcon } from '@heroicons/react/solid';
 import LeaderboardModal from './LeaderboardModal';
+import FAQModal from './FAQModal';
 
 const SPREADSHEET_ID = "1PvCyLxRjOE03WjubusMhiYOYaG11zvAtcr2uu_MedNU";
 
 export function App() {
   const [currentTile, setCurrentTile] = useState<_Tile>();
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showFAQ, setShowFAQ] = useState(false);
+
+  const [faq, setFaq] = useState<string>();
 
   const [accessToken, setAccessToken] = useState<string>();
   const [tileData, setTileData] = useState<Array<_Tile>>();
@@ -75,10 +79,34 @@ export function App() {
       .catch(error => console.error(error));
   }, [accessToken]);
 
+  useEffect(() => {
+    if (!accessToken)
+      return;
+
+    fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/FAQ!A1`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      }
+    )
+      .then(response => response.json())
+      .then(data => {
+        const values = data.values;
+        if (!values)
+          return;
+
+        setFaq(values[0][0]);
+      })
+      .catch(error => console.error(error));
+  }, [accessToken]);
+
   return (
     <div className="relative w-screen h-screen flex flex-col items-center overflow-y-auto pt-4" style={{ backgroundImage: `url(${process.env.PUBLIC_URL}/background.png)` }}>
       <TileModal tile={currentTile} setCurrentTile={setCurrentTile} />
       <LeaderboardModal showLeaderboard={showLeaderboard} setShowLeaderboard={setShowLeaderboard} tiles={tileData ?? []} />
+      <FAQModal showFAQ={showFAQ} setShowFAQ={setShowFAQ} faq={faq} />
       <div className='text-3xl md:text-5xl text-yellow-400 text-center' style={{ textShadow: "-2px 2px #000000" }}>The Formidable Foursome</div>
       <div className='text-xl md:text-3xl text-yellow-400 text-center -mb-2' style={{ textShadow: "-2px 2px #000000" }}>Presents</div>
       <div className='text-5xl md:text-7xl text-yellow-400 text-center' style={{ textShadow: "-2px 2px #000000" }}>RNG Street Bingo</div>
@@ -91,8 +119,14 @@ export function App() {
       }
       {tileData &&
         <div className='relative flex flex-col md:h-3/4 md:aspect-square md:grid md:grid-cols-6 md:grid-rows-6 m-auto gap-1'>
-          <div className='absolute -right-14 top-0 w-10 h-10 hover:scale-110 cursor-pointer p-1' style={{ backgroundImage: `url(${process.env.PUBLIC_URL}/scroll.png)`, backgroundSize: "contain", backgroundRepeat: "no-repeat" }}>
-            <ChartBarIcon className='h-full text-white' onClick={() => setShowLeaderboard((f) => !f)} />
+
+          <div className='absolute flex flex-col items-center flex-shrink-0 gap-2 -right-14 top-0'>
+            <div className='w-12 h-12 hover:scale-110 cursor-pointer p-1 flex items-center justify-center text-white' style={{ backgroundImage: `url(${process.env.PUBLIC_URL}/scroll.png)`, backgroundSize: "contain", backgroundRepeat: "no-repeat" }} onClick={() => setShowLeaderboard((f) => !f)}>
+              <ChartBarIcon className='w-8' />
+            </div>
+            <div className='w-12 h-12 hover:scale-110 cursor-pointer p-1 flex items-center justify-center text-white' style={{ backgroundImage: `url(${process.env.PUBLIC_URL}/scroll.png)`, backgroundSize: "contain", backgroundRepeat: "no-repeat" }} onClick={() => setShowFAQ((f) => !f)}>
+              FAQ
+            </div>
           </div>
           {tileData?.map((tile) => <Tile key={tile.number} tile={tile} setCurrentTile={setCurrentTile} />)}
         </div>
