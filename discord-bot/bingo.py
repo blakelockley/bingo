@@ -19,6 +19,22 @@ class Bingo(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+        # dicsord_id -> (team, rsn)
+        self.player_map: dict[str, tuple[str, str]] = {}
+
+        sheets = SheetsAPI()
+        res = sheets.read("Players!A2:C100")
+
+        if res.status_code == 200:
+            data = res.json()["values"]
+
+            for row in data:
+                if not all(map(bool, row)):
+                    continue  # skip rows with missing data
+
+                (rsn, team, discord_id) = row
+                self.player_map[discord_id] = (team, rsn)
+
     @app_commands.guilds(discord.Object(id=GUILD_ID))
     @commands.hybrid_command(
         name="completed_tile",
@@ -43,8 +59,17 @@ class Bingo(commands.Cog):
     ):
         sheets = SheetsAPI()
 
-        rsn = ctx.author.name  # TODO: Lookup rsn from discord user id
-        team = "Team A"  # TODO: Lookup team from discord user id
+        discord_id = str(ctx.author.id)
+        team, rsn = self.player_map.get(discord_id, (None, None))
+
+        if not team:
+            embed = discord.Embed(
+                title=f"An error occured while updating the spreadsheet...",
+                description="We are unable to find your team and RSN, please message Blakos!",
+                color=discord.Color.red(),
+            )
+
+            return await ctx.send(embed=embed)
 
         row = int(tile_number) + 1  # Add 1 to account for header row
         column = TEAM_COLUMN_MAP[team]

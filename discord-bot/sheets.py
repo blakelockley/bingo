@@ -16,10 +16,24 @@ class SheetsAPI:
 
         self.credentials.refresh(google_requests.Request())
 
-    def write(self, cell: str, value: str):
+    def read(self, range: str):
         """
         Write a value to a cell in the spreadsheet
         NOTE: `row` will be 1 larger than the actual tile number due to header row in spreadsheet.
+        """
+
+        res = requests.get(
+            f"https://sheets.googleapis.com/v4/spreadsheets/{SPREADSHEET_ID}/values/{range}",
+            headers={"Authorization": f"Bearer {self.credentials.token}"},
+        )
+
+        return res
+
+    def write(self, cell: str, value: str):
+        """
+        Write a value to a cell in the spreadsheet
+        NOTE: `row` will
+        be 1 larger than the actual tile number due to header row in spreadsheet.
         """
 
         res = requests.put(
