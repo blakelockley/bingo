@@ -98,7 +98,8 @@ class Bingo(commands.Cog):
 
                 embeds.append(embed)
 
-            await ctx.send(embeds=embeds, ephemeral=True)
+            ephemeral = str(tile_number) == "27"  # Only hide hide and seek tile
+            await ctx.send(embeds=embeds, ephemeral=ephemeral)
 
         else:
             embed = discord.Embed(
