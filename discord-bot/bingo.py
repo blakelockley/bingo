@@ -7,6 +7,7 @@ from discord.ext import commands
 from sheets import SheetsAPI
 
 GUILD_ID = os.getenv("GUILD_ID", "532377514975428628")
+MOD_SUBMISSION_CHANNEL_ID = "1271294688313348147"
 
 TEAM_COLUMN_MAP = {
     "Team A": "E",
@@ -100,6 +101,8 @@ class Bingo(commands.Cog):
 
             ephemeral = str(tile_number) == "27"  # Only hide hide and seek tile
             await ctx.send(embeds=embeds, ephemeral=ephemeral)
+
+            await self.bot.get_channel(MOD_SUBMISSION_CHANNEL_ID).send(embeds=embeds)
 
         else:
             embed = discord.Embed(
