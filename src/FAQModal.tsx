@@ -4,10 +4,15 @@ import { useEffect } from 'react';
 
 function FAQModal(props: { faq?: string, showFAQ: boolean, setShowFAQ: (f: boolean) => void }) {
   useEffect(() => {
+    if (!props.showFAQ)
+      return;
+
+    window.location.hash = `#faq`;
     document.title = "RNG Street Bingo | FAQ";
-  }, []);
+  }, [props.showFAQ]);
 
   function onClose() {
+    window.location.hash = "";
     document.title = "RNG Street Bingo";
 
     props.setShowFAQ(false);

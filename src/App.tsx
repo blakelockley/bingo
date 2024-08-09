@@ -72,9 +72,17 @@ export function App() {
         setTileData(tileData);
 
         if (window.location.hash) {
-          const tileNumber = parseInt(window.location.hash.substring(1));
-          const tile = tileData.find((tile: _Tile) => tile.number === tileNumber);
-          setCurrentTile(tile);
+          const hash = window.location.hash.substring(1);
+          if (hash === "leaderboard")
+            setShowLeaderboard(true);
+          else if (hash === "faq")
+            setShowFAQ(true);
+          else {
+            const tileNumber = parseInt(hash);
+            const tile = tileData.find((tile: _Tile) => tile.number === tileNumber);
+            if (tile)
+              setCurrentTile(tile);
+          }
         }
       })
       .catch(error => console.error(error));

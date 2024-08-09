@@ -5,10 +5,15 @@ import { useEffect, useMemo } from 'react';
 
 function LeaderboardModal(props: { teams: Array<Team> | undefined; tiles: Array<Tile>, showLeaderboard: boolean, setShowLeaderboard: (f: boolean) => void }) {
   useEffect(() => {
+    if (!props.showLeaderboard)
+      return;
+
+    window.location.hash = `#leaderboard`;
     document.title = "RNG Street Bingo | Leaderboard";
-  }, []);
+  }, [props.showLeaderboard]);
 
   function onClose() {
+    window.location.hash = "";
     document.title = "RNG Street Bingo";
 
     props.setShowLeaderboard(false);
