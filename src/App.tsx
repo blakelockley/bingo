@@ -1,4 +1,4 @@
-import { Tile as _Tile } from './interfaces';
+import { Tile as _Tile, Team } from './interfaces';
 import { useEffect, useState } from 'react';
 import TileModal from './TileModal';
 import Tile from './Tile';
@@ -14,6 +14,7 @@ export function App() {
   const [showFAQ, setShowFAQ] = useState(false);
 
   const [faq, setFaq] = useState<string>();
+  const [teams, setTeams] = useState<Array<Team>>();
 
   const [accessToken, setAccessToken] = useState<string>();
   const [tileData, setTileData] = useState<Array<_Tile>>();
@@ -102,10 +103,44 @@ export function App() {
       .catch(error => console.error(error));
   }, [accessToken]);
 
+
+  useEffect(() => {
+    if (!accessToken)
+      return;
+
+    fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/Teams!A1:C10`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      }
+    )
+      .then(response => response.json())
+      .then(data => {
+        const values = data.values;
+        if (!values)
+          return;
+
+        const rows = values.slice(1);
+
+        const teamsData = rows.map((row: Array<string>) => {
+          return {
+            name: row[0],
+            colour: row[1],
+            logoUrl: row[2],
+          };
+        });
+
+        setTeams(teamsData);
+      })
+      .catch(error => console.error(error));
+  }, [accessToken]);
+
   return (
     <div className="relative w-screen h-screen flex flex-col items-center overflow-y-auto pt-4" style={{ backgroundImage: `url(${process.env.PUBLIC_URL}/background.png)` }}>
-      <TileModal tile={currentTile} setCurrentTile={setCurrentTile} />
-      <LeaderboardModal showLeaderboard={showLeaderboard} setShowLeaderboard={setShowLeaderboard} tiles={tileData ?? []} />
+      <TileModal tile={currentTile} setCurrentTile={setCurrentTile} teams={teams} />
+      <LeaderboardModal showLeaderboard={showLeaderboard} setShowLeaderboard={setShowLeaderboard} teams={teams} tiles={tileData ?? []} />
       <FAQModal showFAQ={showFAQ} setShowFAQ={setShowFAQ} faq={faq} />
       <div className='text-3xl md:text-5xl text-yellow-400 text-center' style={{ textShadow: "-2px 2px #000000" }}>The Formidable Foursome</div>
       <div className='text-xl md:text-3xl text-yellow-400 text-center -mb-2' style={{ textShadow: "-2px 2px #000000" }}>Presents</div>
@@ -119,7 +154,6 @@ export function App() {
       }
       {tileData &&
         <div className='relative flex flex-col md:h-3/4 md:aspect-square md:grid md:grid-cols-6 md:grid-rows-6 m-auto gap-1'>
-
           <div className='absolute flex flex-col items-center flex-shrink-0 gap-2 -right-14 top-0'>
             <div className='w-12 h-12 hover:scale-110 cursor-pointer p-1 flex items-center justify-center text-white' style={{ backgroundImage: `url(${process.env.PUBLIC_URL}/scroll.png)`, backgroundSize: "contain", backgroundRepeat: "no-repeat" }} onClick={() => setShowLeaderboard((f) => !f)}>
               <ChartBarIcon className='w-8' />
@@ -128,7 +162,7 @@ export function App() {
               FAQ
             </div>
           </div>
-          {tileData?.map((tile) => <Tile key={tile.number} tile={tile} setCurrentTile={setCurrentTile} />)}
+          {tileData?.map((tile) => <Tile key={tile.number} tile={tile} setCurrentTile={setCurrentTile} teams={teams} />)}
         </div>
       }
     </div>

@@ -1,9 +1,9 @@
 import { Dialog } from '@headlessui/react'
-import { Tile } from './interfaces';
+import { Team, Tile } from './interfaces';
 import { XIcon } from '@heroicons/react/solid';
 import { useEffect } from 'react';
 
-function TileModal(props: { tile?: Tile, setCurrentTile: (tile?: Tile) => void }) {
+function TileModal(props: { tile?: Tile, setCurrentTile: (tile?: Tile) => void, teams?: Array<Team> }) {
   const { tile } = props;
 
   useEffect(() => {
@@ -22,6 +22,10 @@ function TileModal(props: { tile?: Tile, setCurrentTile: (tile?: Tile) => void }
     props.setCurrentTile(undefined);
   }
 
+  const teamA = props.teams?.[0];
+  const teamB = props.teams?.[1];
+  const teamC = props.teams?.[2];
+
   return (
     <Dialog open={!!props.tile} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 flex w-screen h-screen items-center justify-center bg-black/50">
@@ -33,18 +37,18 @@ function TileModal(props: { tile?: Tile, setCurrentTile: (tile?: Tile) => void }
             {tile?.description}
           </div>
           {tile?.teamACompletedBy &&
-            <div className='font-semibold text-lg text-[#ff0000]' style={{ textShadow: "-1px 1px #000000" }}>
-              Team A has completed this tile thanks to {tile?.teamACompletedBy}
+            <div className='font-semibold text-lg' style={{ color: teamA?.colour, textShadow: "-1px 1px #ffffff" }}>
+              {teamA?.name} has completed this tile thanks to {tile?.teamACompletedBy}
             </div>
           }
           {tile?.teamBCompletedBy &&
-            <div className='font-semibold text-lg text-[#00ff00]' style={{ textShadow: "-1px 1px #000000" }}>
-              Team B has completed this tile thanks to {tile?.teamBCompletedBy}
+            <div className='font-semibold text-lg' style={{ color: teamB?.colour, textShadow: "-1px 1px #ffffff" }}>
+              {teamB?.name} has completed this tile thanks to {tile?.teamBCompletedBy}
             </div>
           }
           {tile?.teamCCompletedBy &&
-            <div className='font-semibold text-lg text-[#0000ff]' style={{ textShadow: "-1px 1px #000000" }}>
-              Team C has completed this tile thanks to {tile?.teamCCompletedBy}
+            <div className='font-semibold text-lg' style={{ color: teamC?.colour, textShadow: "-1px 1px #ffffff" }}>
+              {teamC?.name} has completed this tile thanks to {tile?.teamCCompletedBy}
             </div>
           }
           <div className='absolute right-16 top-12 flex text-yellow-300 z-10'>

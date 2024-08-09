@@ -5,9 +5,7 @@ export interface Player {
 export interface Team {
   name: string;
   colour: string;
-  players: Player[];
-
-  completed_tiles: number;
+  logoUrl: string;
 }
 
 export interface Tile {
