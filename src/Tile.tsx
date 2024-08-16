@@ -6,7 +6,7 @@ function Tile(props: { tile: _Tile, setCurrentTile: (tile: _Tile) => void, teams
   const { tile } = props;
 
   const compeltedByList = [tile.teamACompletedBy, tile.teamBCompletedBy, tile.teamCCompletedBy];
-  const showOverlay = props.viewAs ? compeltedByList[props.viewAs] : !!tile.teamACompletedBy && !!tile.teamBCompletedBy && !!tile.teamCCompletedBy;
+  const showOverlay = props.viewAs !== undefined ? compeltedByList[props.viewAs] : !!tile.teamACompletedBy && !!tile.teamBCompletedBy && !!tile.teamCCompletedBy;
 
   return (
     <div className="relative w-full aspect-square flex flex-col items-center justify-center text-center md:hover:scale-150 md:hover:drop-shadow md:hover:z-20 transition-all cursor-pointer md:p-3" onClick={() => props.setCurrentTile(props.tile)} style={{ backgroundImage: `url(${process.env.PUBLIC_URL}/scroll.png)`, backgroundSize: "contain", backgroundRepeat: "no-repeat" }}>
