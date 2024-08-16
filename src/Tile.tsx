@@ -1,11 +1,12 @@
 import { CheckCircleIcon } from "@heroicons/react/solid";
 import { Tile as _Tile, Team } from "./interfaces";
 
-function Tile(props: { tile: _Tile, setCurrentTile: (tile: _Tile) => void, teams?: Array<Team> }) {
+function Tile(props: { tile: _Tile, setCurrentTile: (tile: _Tile) => void, teams?: Array<Team>, viewAs?: number }) {
 
   const { tile } = props;
 
-  const completedByAll = !!tile.teamACompletedBy && !!tile.teamBCompletedBy && !!tile.teamCCompletedBy;
+  const compeltedByList = [tile.teamACompletedBy, tile.teamBCompletedBy, tile.teamCCompletedBy];
+  const showOverlay = props.viewAs ? compeltedByList[props.viewAs] : !!tile.teamACompletedBy && !!tile.teamBCompletedBy && !!tile.teamCCompletedBy;
 
   return (
     <div className="relative w-full aspect-square flex flex-col items-center justify-center text-center md:hover:scale-150 md:hover:drop-shadow md:hover:z-20 transition-all cursor-pointer md:p-3" onClick={() => props.setCurrentTile(props.tile)} style={{ backgroundImage: `url(${process.env.PUBLIC_URL}/scroll.png)`, backgroundSize: "contain", backgroundRepeat: "no-repeat" }}>
@@ -22,18 +23,18 @@ function Tile(props: { tile: _Tile, setCurrentTile: (tile: _Tile) => void, teams
         {tile.number}
       </div>
       <div className="absolute top-0 left-0 w-full h-full md:p-2 p-8 overflow-hidden z-20">
-        {completedByAll &&
-          <div className="w-full h-full bg-black/50 z-20 rounded-sm" />
+        {showOverlay &&
+          <div className="w-full h-full opacity-50 z-20 rounded-sm" style={{ backgroundColor: props.viewAs !== undefined ? props.teams?.[props.viewAs].colour : "black" }} />
         }
       </div>
       <div className='absolute flex -top-2 gap-1 text-sm z-30 rounded-full'>
-        {tile.teamACompletedBy &&
+        {((props.viewAs === 0 || props.viewAs === undefined) && tile.teamACompletedBy) &&
           <CheckCircleIcon className="w-6 h-6 bg-white rounded-full" style={{ color: props.teams?.[0]?.colour }} />
         }
-        {tile.teamBCompletedBy &&
+        {((props.viewAs === 1 || props.viewAs === undefined) && tile.teamBCompletedBy) &&
           <CheckCircleIcon className="w-6 h-6 bg-white rounded-full" style={{ color: props.teams?.[1]?.colour }} />
         }
-        {tile.teamCCompletedBy &&
+        {((props.viewAs === 2 || props.viewAs === undefined) && tile.teamCCompletedBy) &&
           <CheckCircleIcon className="w-6 h-6 bg-white rounded-full" style={{ color: props.teams?.[2]?.colour }} />
         }
       </div>

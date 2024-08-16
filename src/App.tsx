@@ -19,6 +19,8 @@ export function App() {
   const [accessToken, setAccessToken] = useState<string>();
   const [tileData, setTileData] = useState<Array<_Tile>>();
 
+  const [viewAs, setViewAs] = useState<number>();
+
   useEffect(() => {
     if (accessToken)
       return;
@@ -170,7 +172,23 @@ export function App() {
               FAQ
             </div>
           </div>
-          {tileData?.map((tile) => <Tile key={tile.number} tile={tile} setCurrentTile={setCurrentTile} teams={teams} />)}
+          {teams &&
+            <div className='absolute flex flex-col items-center flex-shrink-0 gap-2 -left-14 top-0'>
+              <div className={`w-12 h-12 hover:scale-110 cursor-pointer p-1 flex items-center justify-center text-white ${viewAs === undefined ? "border-2 border-yellow-400 rounded" : ""}`} style={{ backgroundImage: `url(${process.env.PUBLIC_URL}/scroll.png)`, backgroundSize: "contain", backgroundRepeat: "no-repeat" }} onClick={() => setViewAs(undefined)}>
+                ALL
+              </div>
+              <div className={`w-12 h-12 hover:scale-110 cursor-pointer p-1 flex items-center justify-center text-white ${viewAs === 0 ? "border-2 border-yellow-400 rounded" : ""}`} style={{ backgroundImage: `url(${process.env.PUBLIC_URL}/scroll.png)`, backgroundSize: "contain", backgroundRepeat: "no-repeat" }} onClick={() => setViewAs(0)}>
+                {teams[0]?.logoUrl && <img src={teams[0]?.logoUrl} alt={teams[0]?.name} className='w-8 h-8' />}
+              </div>
+              <div className={`w-12 h-12 hover:scale-110 cursor-pointer p-1 flex items-center justify-center text-white ${viewAs === 1 ? "border-2 border-yellow-400 rounded" : ""}`} style={{ backgroundImage: `url(${process.env.PUBLIC_URL}/scroll.png)`, backgroundSize: "contain", backgroundRepeat: "no-repeat" }} onClick={() => setViewAs(1)}>
+                {teams[1]?.logoUrl && <img src={teams[1]?.logoUrl} alt={teams[1]?.name} className='w-8 h-8' />}
+              </div>
+              <div className={`w-12 h-12 hover:scale-110 cursor-pointer p-1 flex items-center justify-center text-white ${viewAs === 2 ? "border-2 border-yellow-400 rounded" : ""}`} style={{ backgroundImage: `url(${process.env.PUBLIC_URL}/scroll.png)`, backgroundSize: "contain", backgroundRepeat: "no-repeat" }} onClick={() => setViewAs(2)}>
+                {teams[2]?.logoUrl && <img src={teams[2]?.logoUrl} alt={teams[2]?.name} className='w-8 h-8' />}
+              </div>
+            </div>
+          }
+          {tileData?.map((tile) => <Tile key={tile.number} tile={tile} setCurrentTile={setCurrentTile} teams={teams} viewAs={viewAs} />)}
         </div>
       }
     </div>
