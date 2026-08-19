@@ -54,17 +54,18 @@ function GridTile(props: Props) {
 
 
   return (
-    <div className="relative">
-      <div className={`border w-[88px] h-[88px] p-2 overflow-hidden bg-gray-800 ${tile.completed ? "border-green-400" : (tile.region_unlock ? "border-orange-400" : "border-gray-400")}`}>
-        <div className="w-full text-center">{tile.number}. {tile.name}</div>
+    <div className="relative group">
+      <div className={`border w-[88px] h-[88px] p-2 overflow-hidden cursor-pointer bg-gray-800 ${tile.completed ? "border-green-400" : (tile.region_unlock ? "border-orange-400" : "border-gray-400")}`}>
         <img
           src={tile.image}
           alt={tile.name}
-          className="w-20 h-20 aspect-square"
+          className="absolute top-0 left-0 w-full h-full aspect-auto"
           onError={(e) => {
             e.currentTarget.style.display = "none";
           }}
         />
+        <div className="relative bg-black z-20 w-5 h-5 text-center">{tile.number}.</div>
+        <div className="hidden group-hover:block relative w-full text-center bg-black z-20">{tile.name}</div>
       </div>
       {unlockArrow &&
         <div className={`absolute z-10 text-3xl ${ARROW_POSITION_CLASSES[unlockArrow]}`}>
