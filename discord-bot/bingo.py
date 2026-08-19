@@ -10,9 +10,10 @@ GUILD_ID = os.getenv("GUILD_ID", "532377514975428628")
 MOD_SUBMISSION_CHANNEL_ID = int("1271294688313348147")
 
 TEAM_COLUMN_MAP = {
-    "Team A": "E",
-    "Team B": "F",
-    "Team C": "G",
+    1: "E",
+    2: "F",
+    3: "G",
+    4: "H",
 }
 
 
@@ -75,7 +76,7 @@ class Bingo(commands.Cog):
         row = int(tile_number) + 1  # Add 1 to account for header row
         column = TEAM_COLUMN_MAP[team]
 
-        res = sheets.write(f"Tiles!{column}{row}", rsn)
+        res = sheets.write(f"db!{column}{row}", rsn)
 
         embed: discord.Embed
         if res.status_code == 200:

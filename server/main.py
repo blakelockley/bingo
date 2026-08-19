@@ -14,6 +14,18 @@ from google.oauth2 import service_account
 app = Flask(__name__)
 
 
+SPREADSHEET_ID = "1nTDDOllO7VVZhH5sgdm6snsHYNBQUWjc7Ks9UvXWTt4"
+RANGE = "A1:Z65"
+
+TEAM_TOKENS = {
+    "6OUiKrxlFog8TwaBZDh77sKG": 1,
+    "QqoRasBp4tuBog0uiXXB7eIa": 2,
+    "ZxiId4UG4V0MMQPg4Z4Z0gby": 3,
+    "sJHjvucPS3gZQo9yvAqPcFR6": 4,
+}
+
+
+
 @app.after_request
 def add_cors_headers(response):
     # X-Token is a custom header, so browsers send a preflight OPTIONS
@@ -24,33 +36,16 @@ def add_cors_headers(response):
     return response
 
 
-SPREADSHEET_ID = "1nTDDOllO7VVZhH5sgdm6snsHYNBQUWjc7Ks9UvXWTt4"
-RANGE = "A1:Z65"
-
-TOKEN_TEAM_1 = "6OUiKrxlFog8TwaBZDh77sKG"
-TOKEN_TEAM_2 = "QqoRasBp4tuBog0uiXXB7eIa"
-TOKEN_TEAM_3 = "ZxiId4UG4V0MMQPg4Z4Z0gby"
-TOKEN_TEAM_4 = "sJHjvucPS3gZQo9yvAqPcFR6"
-
-# token -> which "completed_N" / team slot it identifies
-TEAM_TOKENS = {
-    TOKEN_TEAM_1: 1,
-    TOKEN_TEAM_2: 2,
-    TOKEN_TEAM_3: 3,
-    TOKEN_TEAM_4: 4,
-}
-
-
 class Tile(TypedDict):
     number: int
+    region: int
     region_unlock: Optional[int]
     name: str
     description: str
     image: str
-    completed_1: bool
-    completed_2: bool
-    completed_3: bool
-    completed_4: bool
+
+    # Computed
+    complted: bool
 
 
 class Region(TypedDict):
@@ -104,13 +99,11 @@ def index():
         tile: Tile = {
             "number": int(record["number"]),
             "region_unlock": region_unlock,
+            "region": region_number,
             "name": record["name"],
             "description": record["description"],
             "image": record["image"],
-            "completed_1": record["completed_1"] == "TRUE",
-            "completed_2": record["completed_2"] == "TRUE",
-            "completed_3": record["completed_3"] == "TRUE",
-            "completed_4": record["completed_4"] == "TRUE",
+            "completed": record[team_field] == "TRUE"
         }
 
         tiles.append(tile)
@@ -123,7 +116,7 @@ def index():
         if region_unlock := tile.get("region_unlock"):
             region_unlock_map[tile["number"]] = region_unlock
 
-    completed_tiles = filter(lambda tile: tile[team_field], tiles)
+    completed_tiles = filter(lambda tile: tile["completed"], tiles)
 
     visible_regions: list[Region] = [regions[0]]
 

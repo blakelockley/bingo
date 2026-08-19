@@ -11,14 +11,12 @@ export interface Team {
 // Matches the Tile TypedDict returned by server/main.py
 export interface Tile {
   number: number;
+  region: number;
   region_unlock: number;
   name: string;
   description: string;
   image: string;
-  completed_1: boolean;
-  completed_2: boolean;
-  completed_3: boolean;
-  completed_4: boolean;
+  completed: boolean;
 }
 
 // Matches the Region TypedDict returned by server/main.py
