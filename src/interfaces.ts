@@ -17,6 +17,7 @@ export interface Tile {
   description: string;
   image: string;
   completed: boolean;
+  bonus_requirements: Array<number>;
 }
 
 // Matches the Region TypedDict returned by server/main.py

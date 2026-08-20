@@ -5,7 +5,7 @@ import usePayload from './usePayload';
 import GridTileModal from './GridTileModal';
 
 const TOKEN_STORAGE_KEY = 'bingoToken';
-const REGIONS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+const REGIONS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 
 
 export function App() {
@@ -27,6 +27,13 @@ export function App() {
     for (const region of payload!.regions)
       res[region.number] = region;
     return res;
+  }, [payload]);
+
+  const bonusTiles = useMemo(() => {
+    if (!payload)
+      return [];
+
+    return payload["bonus_tiles"];
   }, [payload]);
 
   return (
@@ -62,6 +69,22 @@ export function App() {
                   </div>
                 );
               })}
+
+              <div key={16} className='text-white border w-[200px] h-[200px] flex-shrink-0'>
+                <div className="grid grid-cols-2 gap-2 overflow-visible flex-shrink-0 p-2">
+                  {!!regionMap[16]
+                    ? <GridTile key={0} tile={regionMap[16]?.["tiles"]![0]} onClick={setCurrentModal} />
+                    : <div className={`border w-[88px] h-[88px] p-2 overflow-hidden cursor-pointer flex items-center justify-center text-center text-red-400 border-red-400`}>Final tile locked</div>
+                  }
+
+                  <div className={`w-[88px] h-[88px] p-2 overflow-hidden cursor-pointer flex items-end justify-center text-center text-yellow-400 underline`}>Bonus Tiles</div>
+
+                  {bonusTiles.map((tile) =>
+                    <GridTile key={tile.number} tile={tile} onClick={setCurrentModal} />
+                  )}
+                </div>
+              </div>
+
             </div>
           </div>
         )}

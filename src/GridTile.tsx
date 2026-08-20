@@ -56,7 +56,7 @@ function GridTile(props: Props) {
 
   return (
     <div className="relative group" onClick={() => onClick(tile)}>
-      <div className={`border w-[88px] h-[88px] p-2 overflow-hidden cursor-pointer bg-gray-800 ${tile.completed ? "border-green-400" : (tile.region_unlock ? "border-orange-400" : "border-gray-400")}`}>
+      <div className={`border w-[88px] h-[88px] p-2 overflow-hidden cursor-pointer bg-gray-800 ${tile.completed ? "border-green-400" : (tile.region_unlock ? "border-orange-400" : "border-gray-400")} ${tile.bonus_requirements.length > 0 ? "border-dashed" : "border-solid"}`}>
         <img
           src={tile.image}
           alt={tile.name}

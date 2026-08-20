@@ -2,6 +2,7 @@ import json
 import os
 from typing import Optional, TypedDict
 import requests
+from itertools import zip_longest
 
 from dotenv import load_dotenv
 
@@ -25,7 +26,6 @@ TEAM_TOKENS = {
 }
 
 
-
 @app.after_request
 def add_cors_headers(response):
     # X-Token is a custom header, so browsers send a preflight OPTIONS
@@ -43,9 +43,10 @@ class Tile(TypedDict):
     name: str
     description: str
     image: str
+    bonus_requirements: list[int]
 
     # Computed
-    complted: bool
+    completed: bool
 
 
 class Region(TypedDict):
@@ -84,17 +85,27 @@ def index():
     headers, *rows = values
 
     tiles: list[Tile] = []
+    bonus_tiles: list[Tile] = []
     regions: dict[int, Region] = {}
     region_unlock_map: dict[int, int] = {}
 
     for row in rows:
-        record = dict(zip(headers, row))
+        record = dict(zip_longest(headers, row, fillvalue=""))
         region_number = int(record["region"])
+
+        print(f"{record=}")
 
         try:
             region_unlock = int(record["region_unlock"])
         except:
             region_unlock = None
+
+        try:
+            bonus_requirments = list(
+                map(int, str(record["bonus_requirements"]).split(","))
+            )
+        except:
+            bonus_requirments = []
 
         tile: Tile = {
             "number": int(record["number"]),
@@ -103,10 +114,14 @@ def index():
             "name": record["name"],
             "description": record["description"],
             "image": record["image"],
-            "completed": record[team_field] == "TRUE"
+            "completed": record[team_field] == "TRUE",
+            "bonus_requirements": bonus_requirments,
         }
 
         tiles.append(tile)
+
+        if tile["bonus_requirements"]:
+            bonus_tiles.append(tile)
 
         if region_number not in regions:
             regions[region_number] = {"number": region_number, "tiles": []}
@@ -124,7 +139,7 @@ def index():
         if region_number := region_unlock_map.get(tile["number"]):
             visible_regions.append(regions[region_number])
 
-    return jsonify({"regions": visible_regions})
+    return jsonify({"regions": visible_regions, "bonus_tiles": bonus_tiles})
 
 
 if __name__ == "__main__":

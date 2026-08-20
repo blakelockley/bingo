@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Tile } from "./interfaces";
 
 interface Props {
@@ -7,6 +8,16 @@ interface Props {
 
 function GridTileModal(props: Props) {
   const { tile, closeModal } = props;
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape")
+        closeModal();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [closeModal]);
 
   return (
     <div className="absolute top-0 left-0 w-screen h-screen flex items-center justify-center z-40" >
