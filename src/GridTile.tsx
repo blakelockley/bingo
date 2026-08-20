@@ -2,6 +2,7 @@ import { Tile } from "./interfaces";
 
 interface Props {
   tile: Tile;
+  onClick: (tile: Tile) => void;
 }
 
 const ARROW_EMOJI: Record<string, string> = {
@@ -23,7 +24,7 @@ const ARROW_POSITION_CLASSES: Record<string, string> = {
 };
 
 function GridTile(props: Props) {
-  const { tile } = props;
+  const { tile, onClick } = props;
 
   const unlockArrow = (() => {
     if (!tile.region_unlock)
@@ -54,7 +55,7 @@ function GridTile(props: Props) {
 
 
   return (
-    <div className="relative group">
+    <div className="relative group" onClick={() => onClick(tile)}>
       <div className={`border w-[88px] h-[88px] p-2 overflow-hidden cursor-pointer bg-gray-800 ${tile.completed ? "border-green-400" : (tile.region_unlock ? "border-orange-400" : "border-gray-400")}`}>
         <img
           src={tile.image}
