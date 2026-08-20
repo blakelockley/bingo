@@ -29,7 +29,7 @@ function GridTileModal(props: Props) {
         <div className="relative text-center text-white text-2xl w-full">{tile.description}</div>
         {bonusDataItem &&
           <div className="relative text-center text-white text-2xl w-full">
-            Completed tile progress: <span className="text-green-400">{bonusDataItem.bonus_progress}</span> / <span className="text-yellow-400">{bonusDataItem.bonus_required}</span>
+            Completed tile progress: <span className={`${tile.completed ? "text-green-400" : "text-yellow-400"}`}>{bonusDataItem.bonus_progress} of {bonusDataItem.bonus_required}</span>
           </div>
         }
         <img

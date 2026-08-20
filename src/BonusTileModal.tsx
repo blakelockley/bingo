@@ -27,7 +27,7 @@ function BonusTileModal(props: Props) {
         <div className="relative text-center text-white text-4xl w-full mt-auto">Bonus Tile Hidden</div>
         <div className="relative text-center text-white text-2xl w-full">Unlock all component regions to view this item</div>
         <div className="relative text-center text-white text-4xl my-auto mx-10">
-          Your team has unlocked <span className="text-yellow-400">{bonusDataItem.bonus_visibility}</span> of <span className="text-yellow-400">{bonusDataItem.bonus_required}</span> required regions to reveal this tile.
+          Your team has unlocked <span className="text-yellow-400">{bonusDataItem.bonus_visibility} of {bonusDataItem.bonus_required}</span> regions to reveal this tile.
         </div>
       </div>
     </div>
