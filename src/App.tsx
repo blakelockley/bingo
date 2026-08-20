@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Region, Tile } from './interfaces';
+import { BonusDataItem, Region, Tile } from './interfaces';
 import GridTile from './GridTile';
 import usePayload from './usePayload';
 import GridTileModal from './GridTileModal';
+import BonusTileModal from './BonusTileModal';
 
 const TOKEN_STORAGE_KEY = 'bingoToken';
 const REGIONS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
@@ -12,7 +13,7 @@ export function App() {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_STORAGE_KEY) ?? '');
   const { payload, loading, error } = usePayload(token);
 
-  const [currentModal, setCurrentModal] = useState<Tile | null>(null)
+  const [currentModal, setCurrentModal] = useState<{ tile?: Tile, bonusDataItem?: BonusDataItem } | null>(null)
 
   const handleTokenChange = (value: string) => {
     setToken(value);
@@ -39,7 +40,13 @@ export function App() {
   return (
     <div className='relative w-full h-full'>
       {currentModal &&
-        <GridTileModal tile={currentModal} closeModal={() => setCurrentModal(null)} />
+        <>
+          {currentModal.tile
+            ? <GridTileModal tile={currentModal.tile} closeModal={() => setCurrentModal(null)} bonusDataItem={currentModal.bonusDataItem} />
+            : <BonusTileModal bonusDataItem={currentModal.bonusDataItem!} closeModal={() => setCurrentModal(null)} />
+          }
+        </>
+
       }
       <div className="min-h-screen bg-gray-900 p-8 flex flex-col items-center gap-4">
         {payload && (
@@ -47,9 +54,9 @@ export function App() {
             <div className="grid grid-cols-4 gap-4 overflow-auto flex-shrink-0">
               <div key={1} className='text-white border w-[200px] h-[200px] flex-shrink-0'>
                 <div className="grid grid-cols-2 gap-2 overflow-visible flex-shrink-0 p-2">
-                  <GridTile key={0} tile={regionMap[0]?.["tiles"]![0]} onClick={setCurrentModal} />
+                  <GridTile key={0} tile={regionMap[0]?.["tiles"]![0]} onClick={() => setCurrentModal({ tile: regionMap[0]?.["tiles"]![0] })} />
                   {regionMap[1]?.["tiles"].map((tile) =>
-                    <GridTile key={tile.number} tile={tile} onClick={setCurrentModal} />
+                    <GridTile key={tile.number} tile={tile} onClick={() => setCurrentModal({ tile })} />
                   )}
                 </div>
               </div>
@@ -63,7 +70,7 @@ export function App() {
                     }
                     <div className="grid grid-cols-2 gap-2 overflow-visible flex-shrink-0 p-2">
                       {regionMap[regionNumber]?.["tiles"].map((tile) =>
-                        <GridTile key={tile.number} tile={tile} onClick={setCurrentModal} />
+                        <GridTile key={tile.number} tile={tile} onClick={() => setCurrentModal({ tile })} />
                       )}
                     </div>
                   </div>
@@ -73,14 +80,16 @@ export function App() {
               <div key={16} className='text-white border w-[200px] h-[200px] flex-shrink-0'>
                 <div className="grid grid-cols-2 gap-2 overflow-visible flex-shrink-0 p-2">
                   {!!regionMap[16]
-                    ? <GridTile key={0} tile={regionMap[16]?.["tiles"]![0]} onClick={setCurrentModal} />
+                    ? <GridTile key={0} tile={regionMap[16]?.["tiles"]![0]} onClick={() => setCurrentModal({ tile: regionMap[16]?.["tiles"]![0] })} />
                     : <div className={`border w-[88px] h-[88px] p-2 overflow-hidden cursor-pointer flex items-center justify-center text-center text-red-400 border-red-400`}>Final tile locked</div>
                   }
 
                   <div className={`w-[88px] h-[88px] p-2 overflow-hidden cursor-pointer flex items-end justify-center text-center text-yellow-400 underline`}>Bonus Tiles</div>
 
-                  {bonusTiles.map((tile) =>
-                    <GridTile key={tile.number} tile={tile} onClick={setCurrentModal} />
+                  {bonusTiles.map((bonusDataItem) =>
+                    bonusDataItem["tile"]
+                      ? <GridTile key={bonusDataItem.tile.number} tile={bonusDataItem.tile} onClick={() => { setCurrentModal({ tile: bonusDataItem.tile!, bonusDataItem }) }} />
+                      : <div className={`border w-[88px] h-[88px] p-2 overflow-hidden cursor-pointer flex items-center justify-center text-center text-gray-400 border-gray-400 border-dashed`} onClick={() => setCurrentModal({ bonusDataItem })}>Hidden</div>
                   )}
                 </div>
               </div>

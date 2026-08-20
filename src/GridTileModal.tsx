@@ -1,13 +1,14 @@
 import { useEffect } from "react";
-import { Tile } from "./interfaces";
+import { BonusDataItem, Tile } from "./interfaces";
 
 interface Props {
   tile: Tile;
   closeModal: () => void;
+  bonusDataItem?: BonusDataItem;
 }
 
 function GridTileModal(props: Props) {
-  const { tile, closeModal } = props;
+  const { tile, closeModal, bonusDataItem } = props;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -26,6 +27,11 @@ function GridTileModal(props: Props) {
         <div className="w-full text-white text-4xl">{tile.number}.</div>
         <div className="relative text-center text-white text-4xl w-full">{tile.name}</div>
         <div className="relative text-center text-white text-2xl w-full">{tile.description}</div>
+        {bonusDataItem &&
+          <div className="relative text-center text-white text-2xl w-full">
+            Completed tile progress: <span className="text-green-400">{bonusDataItem.bonus_progress}</span> / <span className="text-yellow-400">{bonusDataItem.bonus_required}</span>
+          </div>
+        }
         <img
           src={tile.image}
           alt={tile.name}

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Region, Tile } from './interfaces';
+import { BonusDataItem, Region } from './interfaces';
 
 const API_URL = process.env.REACT_APP_API_URL ?? 'http://localhost:8080/';
 
 function usePayload(token: string) {
-  const [payload, setPayload] = useState<{ regions: Region[], bonus_tiles: Tile[] } | null>(null);
+  const [payload, setPayload] = useState<{ regions: Region[], bonus_tiles: BonusDataItem[] } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

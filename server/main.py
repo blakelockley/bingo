@@ -49,6 +49,14 @@ class Tile(TypedDict):
     completed: bool
 
 
+class BonusDataItem(TypedDict):
+    bonus_unlocked: bool
+    bonus_required: int
+    bonus_progress: int
+
+    tile: Optional[Tile]
+
+
 class Region(TypedDict):
     number: int
     tiles: list[Tile]
@@ -85,6 +93,8 @@ def index():
     headers, *rows = values
 
     tiles: list[Tile] = []
+    tile_map: dict[int, Tile] = {}
+
     bonus_tiles: list[Tile] = []
     regions: dict[int, Region] = {}
     region_unlock_map: dict[int, int] = {}
@@ -93,7 +103,7 @@ def index():
         record = dict(zip_longest(headers, row, fillvalue=""))
         region_number = int(record["region"])
 
-        print(f"{record=}")
+        number = int(record["number"])
 
         try:
             region_unlock = int(record["region_unlock"])
@@ -105,10 +115,10 @@ def index():
                 map(int, str(record["bonus_requirements"]).split(","))
             )
         except:
-            bonus_requirments = []
+            bonus_requirments = None
 
         tile: Tile = {
-            "number": int(record["number"]),
+            "number": number,
             "region_unlock": region_unlock,
             "region": region_number,
             "name": record["name"],
@@ -119,8 +129,9 @@ def index():
         }
 
         tiles.append(tile)
+        tile_map[number] = tile
 
-        if tile["bonus_requirements"]:
+        if bonus_requirments:
             bonus_tiles.append(tile)
 
         if region_number not in regions:
@@ -131,15 +142,49 @@ def index():
         if region_unlock := tile.get("region_unlock"):
             region_unlock_map[tile["number"]] = region_unlock
 
-    completed_tiles = filter(lambda tile: tile["completed"], tiles)
+    completed_tiles = list(filter(lambda tile: tile["completed"], tiles))
 
     visible_regions: list[Region] = [regions[0]]
+    visible_region_numbers: list[int] = [0]
+
+    print(f"{completed_tiles=}")
 
     for tile in completed_tiles:
         if region_number := region_unlock_map.get(tile["number"]):
             visible_regions.append(regions[region_number])
+            visible_region_numbers.append(region_number)
 
-    return jsonify({"regions": visible_regions, "bonus_tiles": bonus_tiles})
+    bonus_data: list[BonusDataItem] = []
+
+    for bonus_tile in bonus_tiles:
+        bonus_requirements = bonus_tile["bonus_requirements"]
+
+        bonus_required = len(bonus_requirements)
+
+        bonus_visibility = 0
+        bonus_progress = 0
+
+        for tile_number in bonus_requirements:
+            tile = tile_map[tile_number]
+            if tile["region"] in visible_region_numbers:
+                bonus_visibility += 1
+
+            if tile["completed"]:
+                bonus_progress += 1
+
+        bonus_unlocked = bonus_required == bonus_visibility
+
+        bonus_data_item: BonusDataItem = {
+            "bonus_progress": bonus_progress,
+            "bonus_required": bonus_required,
+            "bonus_unlocked": bonus_unlocked,
+            "bonus_visibility": bonus_visibility,
+            "tile": bonus_tile if bonus_unlocked else None,
+        }
+
+        bonus_data.append(bonus_data_item)
+
+    return jsonify({"regions": visible_regions, "bonus_tiles": bonus_data})
 
 
 if __name__ == "__main__":

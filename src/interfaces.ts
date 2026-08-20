@@ -17,7 +17,15 @@ export interface Tile {
   description: string;
   image: string;
   completed: boolean;
-  bonus_requirements: Array<number>;
+  bonus_requirements: Array<number> | null;
+}
+
+export interface BonusDataItem {
+  bonus_unlocked: boolean;
+  bonus_required: number;
+  bonus_visibility: number;
+  bonus_progress: number;
+  tile: Tile | null;
 }
 
 // Matches the Region TypedDict returned by server/main.py
