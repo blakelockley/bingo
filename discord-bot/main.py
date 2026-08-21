@@ -8,32 +8,31 @@ load_dotenv()
 
 from bingo import Bingo
 
-PREFIX = "$"
-
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-GUILD_ID = os.getenv("GUILD_ID", "532377514975428628")
+GUILD_ID = int(os.getenv("GUILD_ID", "532377514975428628"))
+GUILD = discord.Object(id=GUILD_ID)
 
-intents = discord.Intents.all()
-bot = commands.Bot(intents=intents, command_prefix=PREFIX)
+intents = discord.Intents.default()
+bot = commands.Bot(intents=intents, command_prefix=commands.when_mentioned)
 
 
 @bot.event
 async def on_ready():
     await bot.add_cog(Bingo(bot))
-    await bot.tree.sync(guild=bot.get_guild(GUILD_ID))
+    await bot.tree.sync(guild=GUILD)
 
 
-@bot.command()
-async def sync(ctx):
-    await bot.tree.sync(guild=ctx.guild)
-    await ctx.reply("Command sync successful")
+@bot.tree.command(name="sync", description="Re-sync slash commands", guild=GUILD)
+async def sync(interaction: discord.Interaction):
+    await bot.tree.sync(guild=GUILD)
+    await interaction.response.send_message("Command sync successful", ephemeral=True)
 
 
-@bot.command()
-async def tree_clear(ctx):
-    bot.tree.clear_commands(guild=ctx.guild)
-    await bot.tree.sync(guild=ctx.guild)
-    await ctx.reply("Command sync successful")
+@bot.tree.command(name="tree_clear", description="Clear and re-sync slash commands", guild=GUILD)
+async def tree_clear(interaction: discord.Interaction):
+    bot.tree.clear_commands(guild=GUILD)
+    await bot.tree.sync(guild=GUILD)
+    await interaction.response.send_message("Command sync successful", ephemeral=True)
 
 
 if __name__ == "__main__":
