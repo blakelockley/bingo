@@ -10,8 +10,23 @@ const TOKEN_STORAGE_KEY = 'bingoToken';
 const REGIONS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 
 
+function getInitialToken(): string {
+  const saved = localStorage.getItem(TOKEN_STORAGE_KEY);
+  if (saved) return saved;
+
+  // Only fall back to a `?token=` in the URL when nothing is saved yet —
+  // localStorage always wins once it has something.
+  const urlToken = new URLSearchParams(window.location.search).get('token');
+  if (urlToken) {
+    localStorage.setItem(TOKEN_STORAGE_KEY, urlToken);
+    return urlToken;
+  }
+
+  return '';
+}
+
 export function App() {
-  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_STORAGE_KEY) ?? '');
+  const [token, setToken] = useState(getInitialToken);
   const { payload, loading, error } = usePayload(token);
 
   const [currentModal, setCurrentModal] = useState<{ tile?: Tile, bonusDataItem?: BonusDataItem } | null>(null)
@@ -63,7 +78,7 @@ export function App() {
       <div className="min-h-screen bg-gray-900 p-8 flex flex-col items-center gap-4">
         {!payload && <p className="text-xl text-yellow-200 mt-20">Enter your team token to view the board</p>}
 
-        {(!token || showTokenInput) && (
+        {(!token || !!error || showTokenInput) && (
           <input
             type="text"
             value={token}
