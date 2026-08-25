@@ -17,6 +17,13 @@ TEAM_COLUMN_MAP = {
     4: "J",
 }
 
+CODE_WORD = {
+    "bingo": 1,
+    "chonk": 2,
+    "trial": 3,
+    "quiet": 4,
+}
+
 
 class Bingo(commands.Cog):
     def __init__(self, bot):
@@ -41,13 +48,13 @@ class Bingo(commands.Cog):
         name="upload",
         description="Submit a tile completion",
     )
-    @app_commands.describe(team="Your team number (1-4)")
+    @app_commands.describe(code_word="Your team's code word")
     @app_commands.describe(tile_number="Which tile you have just completed")
     @app_commands.describe(proof="Screenshot of your proof")
     async def upload(
         self,
         ctx: commands.Context,
-        team: int,
+        code_word: str,
         tile_number: str,
         proof: discord.Attachment,
         proof_2: Optional[discord.Attachment] = None,
@@ -69,10 +76,12 @@ class Bingo(commands.Cog):
 
             return await ctx.send(embed=embed, ephemeral=True)
 
-        if team not in TEAM_COLUMN_MAP:
+        team = CODE_WORD.get(code_word.lower())
+
+        if team is None:
             embed = discord.Embed(
-                title="Invalid team",
-                description=f"Team must be one of {', '.join(map(str, TEAM_COLUMN_MAP))}.",
+                title="Invalid code word",
+                description="That code word doesn't match any team.",
                 color=discord.Color.red(),
             )
 
@@ -110,6 +119,24 @@ class Bingo(commands.Cog):
 
             return await ctx.send(embed=embed, ephemeral=True)
 
+        proof_list = list(
+            filter(bool, (proof, *map(locals().get, (f"proof_{i}" for i in range(10)))))
+        )
+
+        if len(proof_list) < tile["min_proofs"]:
+            embed = discord.Embed(
+                title="More proof screenshots required.",
+                description=(
+                    f"⚠️ This tile requires at least {tile['min_proofs']} proof "
+                    f"images, but only {len(proof_list)} {'was' if (len(proof_list) == 1) else 'were'} uploaded.\n\n"
+                    f"Ensure you have completed all requirements of the tile:\n"
+                    f"➡️ {tile['description']}"
+                ),
+                color=discord.Color.red(),
+            )
+
+            return await ctx.send(embed=embed, ephemeral=True)
+
         row = int(tile_number) + 1  # Add 1 to account for header row
         column = TEAM_COLUMN_MAP[team]
 
@@ -117,12 +144,6 @@ class Bingo(commands.Cog):
 
         embed: discord.Embed
         if res.status_code == 200:
-            proof_list = list(
-                filter(
-                    bool, (proof, *map(locals().get, (f"proof_{i}" for i in range(10))))
-                )
-            )
-
             embeds: list[discord.Embed] = []
             mod_embeds: list[discord.Embed] = []
 

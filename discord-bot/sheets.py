@@ -19,6 +19,7 @@ class Tile(TypedDict):
     description: str
     image: str
     bonus_requirements: Optional[list[int]]
+    min_proofs: int
 
     # Computed
     completed: bool
@@ -78,6 +79,11 @@ class SheetsAPI:
             except:
                 bonus_requirements = None
 
+            try:
+                min_proofs = int(record["min_proofs"])
+            except:
+                min_proofs = 1
+
             tile: Tile = {
                 "number": int(record["number"]),
                 "region": int(record["region"]),
@@ -87,6 +93,7 @@ class SheetsAPI:
                 "image": record["image"],
                 "completed": record[team_field] == "TRUE",
                 "bonus_requirements": bonus_requirements,
+                "min_proofs": min_proofs,
             }
 
             tiles.append(tile)
