@@ -18,11 +18,20 @@ app = Flask(__name__)
 SPREADSHEET_ID = "1nTDDOllO7VVZhH5sgdm6snsHYNBQUWjc7Ks9UvXWTt4"
 RANGE = "A1:Z65"
 
+ADMIN_TOKEN = "nNxOJ9pg5W7p29VqpXzYYDTH"
+
 TEAM_TOKENS = {
-    "6OUiKrxlFog8TwaBZDh77sKG": 1,
-    "QqoRasBp4tuBog0uiXXB7eIa": 2,
-    "ZxiId4UG4V0MMQPg4Z4Z0gby": 3,
-    "sJHjvucPS3gZQo9yvAqPcFR6": 4,
+    "Qv4Z4Z0gbRavAqPcFRBog0uy": 1,
+    "sdZDh77sKjv4Z4Z0gbZQo9yt": 2,
+    "ZxiG4UG4V0IdZDh77sKMMQPg": 3,
+    "6OUTwaBiXXiKrxlFog8B7eIa": 4,
+}
+
+TEAM_NAMES = {
+    1: "The Happy Ol' Gooners (H.O.Gs)",
+    2: "Hoggers",
+    3: "Unknucky",
+    4: "Poop Dealers",
 }
 
 
@@ -34,6 +43,20 @@ def add_cors_headers(response):
     response.headers["Access-Control-Allow-Headers"] = "X-Token, Content-Type"
     response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
     return response
+
+
+class RawTile(TypedDict):
+    number: int
+    region: int
+    region_unlock: Optional[int]
+    name: str
+    description: str
+    image: str
+    bonus_requirements: Optional[list[int]]
+    completed_1: bool
+    completed_2: bool
+    completed_3: bool
+    completed_4: bool
 
 
 class Tile(TypedDict):
@@ -62,15 +85,159 @@ class Region(TypedDict):
     tiles: list[Tile]
 
 
+class AdminRegion(TypedDict):
+    number: int
+    tiles: list[RawTile]
+
+
+def parse_raw_tiles(headers: list[str], rows: list[list[str]]) -> list[RawTile]:
+    raw_tiles: list[RawTile] = []
+
+    for row in rows:
+        record = dict(zip_longest(headers, row, fillvalue=""))
+
+        try:
+            region_unlock = int(record["region_unlock"])
+        except:
+            region_unlock = None
+
+        try:
+            bonus_requirements = list(
+                map(int, str(record["bonus_requirements"]).split(","))
+            )
+        except:
+            bonus_requirements = None
+
+        raw_tiles.append(
+            {
+                "number": int(record["number"]),
+                "region": int(record["region"]),
+                "region_unlock": region_unlock,
+                "name": record["name"],
+                "description": record["description"],
+                "image": record["image"],
+                "bonus_requirements": bonus_requirements,
+                "completed_1": record["completed_1"] == "TRUE",
+                "completed_2": record["completed_2"] == "TRUE",
+                "completed_3": record["completed_3"] == "TRUE",
+                "completed_4": record["completed_4"] == "TRUE",
+            }
+        )
+
+    return raw_tiles
+
+
+def build_admin_regions(raw_tiles: list[RawTile]) -> list[AdminRegion]:
+    """
+    Every region, unfiltered by unlock state, with each tile's raw
+    completed_1..4 flags intact — for the admin token only.
+    """
+
+    regions: dict[int, AdminRegion] = {}
+
+    for raw_tile in raw_tiles:
+        if raw_tile["region"] not in regions:
+            regions[raw_tile["region"]] = {"number": raw_tile["region"], "tiles": []}
+
+        regions[raw_tile["region"]]["tiles"].append(raw_tile)
+
+    return list(regions.values())
+
+
+def build_tiles(raw_tiles: list[RawTile], team: Optional[int]):
+    """
+    Build tiles/regions for a given team. If `team` is None every tile's
+    `completed` flag is forced to False — completion progress is per-team
+    information and must never be exposed without a token.
+    """
+
+    team_field = f"completed_{team}" if team is not None else None
+
+    tiles: list[Tile] = []
+    tile_map: dict[int, Tile] = {}
+    regions: dict[int, Region] = {}
+    region_unlock_map: dict[int, int] = {}
+
+    for raw_tile in raw_tiles:
+        tile: Tile = {
+            "number": raw_tile["number"],
+            "region": raw_tile["region"],
+            "region_unlock": raw_tile["region_unlock"],
+            "name": raw_tile["name"],
+            "description": raw_tile["description"],
+            "image": raw_tile["image"],
+            "bonus_requirements": raw_tile["bonus_requirements"],
+            "completed": raw_tile[team_field] if team_field else False,
+        }
+
+        tiles.append(tile)
+        tile_map[tile["number"]] = tile
+
+        if tile["region"] not in regions:
+            regions[tile["region"]] = {"number": tile["region"], "tiles": []}
+
+        regions[tile["region"]]["tiles"].append(tile)
+
+        if tile["region_unlock"] is not None:
+            region_unlock_map[tile["number"]] = tile["region_unlock"]
+
+    return tiles, tile_map, regions, region_unlock_map
+
+
+def visible_region_numbers(
+    tiles: list[Tile], region_unlock_map: dict[int, int]
+) -> set[int]:
+    visible = {0}
+
+    for tile in tiles:
+        if tile["completed"]:
+            unlock = region_unlock_map.get(tile["number"])
+            if unlock is not None:
+                visible.add(unlock)
+
+    return visible
+
+
+def compute_bonus_data(
+    tile_map: dict[int, Tile], bonus_tiles: list[Tile], visible_numbers: set[int]
+) -> list[BonusDataItem]:
+    bonus_data: list[BonusDataItem] = []
+
+    for bonus_tile in bonus_tiles:
+        bonus_requirements = bonus_tile["bonus_requirements"]
+        bonus_required = len(bonus_requirements)
+
+        bonus_visibility = 0
+        bonus_progress = 0
+
+        for tile_number in bonus_requirements:
+            tile = tile_map[tile_number]
+
+            if tile["region"] in visible_numbers:
+                bonus_visibility += 1
+
+            if tile["completed"]:
+                bonus_progress += 1
+
+        bonus_unlocked = bonus_required == bonus_visibility
+
+        bonus_data.append(
+            {
+                "bonus_progress": bonus_progress,
+                "bonus_required": bonus_required,
+                "bonus_unlocked": bonus_unlocked,
+                "bonus_visibility": bonus_visibility,
+                "tile": bonus_tile if bonus_unlocked else None,
+            }
+        )
+
+    return bonus_data
+
+
 @app.route("/")
 def index():
     client_token = request.headers.get("X-Token")
     team = TEAM_TOKENS.get(client_token)
-
-    if team is None:
-        return jsonify({"error": "Invalid or missing token"}), 401
-
-    team_field = f"completed_{team}"
 
     service_account_info = json.loads(os.environ["GOOGLE_APPLICATION_CREDENTIALS"])
 
@@ -92,99 +259,67 @@ def index():
     values = sheet_response.json().get("values", [])
     headers, *rows = values
 
-    tiles: list[Tile] = []
-    tile_map: dict[int, Tile] = {}
+    raw_tiles = parse_raw_tiles(headers, rows)
 
-    bonus_tiles: list[Tile] = []
-    regions: dict[int, Region] = {}
-    region_unlock_map: dict[int, int] = {}
+    if client_token == ADMIN_TOKEN:
+        admin_regions = build_admin_regions(raw_tiles)
 
-    for row in rows:
-        record = dict(zip_longest(headers, row, fillvalue=""))
-        region_number = int(record["region"])
+        # Admin sees the whole board, so every bonus tile's requirements
+        # are considered visible — reveal them all rather than hiding any
+        # behind per-team progress.
+        tiles, tile_map, _, _ = build_tiles(raw_tiles, None)
+        visible_numbers = {tile["region"] for tile in tiles}
+        bonus_tiles = [tile for tile in tiles if tile["bonus_requirements"]]
+        bonus_data = compute_bonus_data(tile_map, bonus_tiles, visible_numbers)
 
-        number = int(record["number"])
+        return jsonify({"regions": admin_regions, "bonus_tiles": bonus_data})
 
-        try:
-            region_unlock = int(record["region_unlock"])
-        except:
-            region_unlock = None
+    if team is not None:
+        tiles, tile_map, regions, region_unlock_map = build_tiles(raw_tiles, team)
+        visible_numbers = visible_region_numbers(tiles, region_unlock_map)
+    else:
+        # No/invalid token: don't error, just show only the regions every
+        # team has unlocked (the intersection, not the union) — a region
+        # only one team has reached shouldn't be spoiled for everyone else.
+        visible_numbers = None
 
-        try:
-            bonus_requirments = list(
-                map(int, str(record["bonus_requirements"]).split(","))
+        for other_team in set(TEAM_TOKENS.values()):
+            team_tiles, _, _, team_region_unlock_map = build_tiles(
+                raw_tiles, other_team
             )
-        except:
-            bonus_requirments = None
+            team_visible = visible_region_numbers(team_tiles, team_region_unlock_map)
+            visible_numbers = (
+                team_visible
+                if visible_numbers is None
+                else visible_numbers & team_visible
+            )
 
-        tile: Tile = {
-            "number": number,
-            "region_unlock": region_unlock,
-            "region": region_number,
-            "name": record["name"],
-            "description": record["description"],
-            "image": record["image"],
-            "completed": record[team_field] == "TRUE",
-            "bonus_requirements": bonus_requirments,
+        visible_numbers = visible_numbers or {0}
+
+        tiles, tile_map, regions, region_unlock_map = build_tiles(raw_tiles, None)
+
+    visible_regions = [
+        regions[number] for number in visible_numbers if number in regions
+    ]
+
+    bonus_tiles = [tile for tile in tiles if tile["bonus_requirements"]]
+    bonus_data = compute_bonus_data(tile_map, bonus_tiles, visible_numbers)
+
+    return jsonify(
+        {
+            "regions": visible_regions,
+            "bonus_tiles": bonus_data,
+            "team": (
+                {
+                    "number": team,
+                    "name": TEAM_NAMES[team],
+                    "score": sum(1 for tile in tiles if tile["completed"]),
+                }
+                if team
+                else None
+            ),
         }
-
-        tiles.append(tile)
-        tile_map[number] = tile
-
-        if bonus_requirments:
-            bonus_tiles.append(tile)
-
-        if region_number not in regions:
-            regions[region_number] = {"number": region_number, "tiles": []}
-
-        regions[region_number]["tiles"].append(tile)
-
-        if region_unlock := tile.get("region_unlock"):
-            region_unlock_map[tile["number"]] = region_unlock
-
-    completed_tiles = list(filter(lambda tile: tile["completed"], tiles))
-
-    visible_regions: list[Region] = [regions[0]]
-    visible_region_numbers: list[int] = [0]
-
-    print(f"{completed_tiles=}")
-
-    for tile in completed_tiles:
-        if region_number := region_unlock_map.get(tile["number"]):
-            visible_regions.append(regions[region_number])
-            visible_region_numbers.append(region_number)
-
-    bonus_data: list[BonusDataItem] = []
-
-    for bonus_tile in bonus_tiles:
-        bonus_requirements = bonus_tile["bonus_requirements"]
-
-        bonus_required = len(bonus_requirements)
-
-        bonus_visibility = 0
-        bonus_progress = 0
-
-        for tile_number in bonus_requirements:
-            tile = tile_map[tile_number]
-            if tile["region"] in visible_region_numbers:
-                bonus_visibility += 1
-
-            if tile["completed"]:
-                bonus_progress += 1
-
-        bonus_unlocked = bonus_required == bonus_visibility
-
-        bonus_data_item: BonusDataItem = {
-            "bonus_progress": bonus_progress,
-            "bonus_required": bonus_required,
-            "bonus_unlocked": bonus_unlocked,
-            "bonus_visibility": bonus_visibility,
-            "tile": bonus_tile if bonus_unlocked else None,
-        }
-
-        bonus_data.append(bonus_data_item)
-
-    return jsonify({"regions": visible_regions, "bonus_tiles": bonus_data})
+    )
 
 
 if __name__ == "__main__":

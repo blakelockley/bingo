@@ -1,15 +1,16 @@
 import { useEffect } from "react";
 import { XIcon } from "@heroicons/react/solid";
-import { BonusDataItem, Tile } from "./interfaces";
+import { AdminTile, BonusDataItem, Tile } from "./interfaces";
 
 interface Props {
-  tile: Tile;
+  tile: Tile | AdminTile;
   closeModal: () => void;
   bonusDataItem?: BonusDataItem;
 }
 
 function GridTileModal(props: Props) {
   const { tile, closeModal, bonusDataItem } = props;
+  const completed = !!tile.completed;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -24,7 +25,7 @@ function GridTileModal(props: Props) {
   return (
     <div className="fixed inset-0 flex items-center justify-center z-[60]" >
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm cursor-pointer" onClick={() => closeModal()} />
-      <div className={`flex flex-col gap-2 relative border-2 w-[600px] h-[600px] p-4 overflow-hidden bg-gray-800 ${tile.completed ? "border-green-400" : (tile.region_unlock ? "border-orange-400" : "border-gray-400")}`}>
+      <div className={`flex flex-col gap-2 relative border-2 w-[600px] h-[600px] p-4 overflow-hidden bg-gray-800 ${completed ? "border-green-400" : (tile.region_unlock ? "border-orange-400" : "border-gray-400")}`}>
         <button
           type="button"
           onClick={() => closeModal()}
@@ -38,7 +39,7 @@ function GridTileModal(props: Props) {
         <div className="relative text-center text-white text-2xl w-full">{tile.description}</div>
         {bonusDataItem &&
           <div className="relative text-center text-white text-2xl w-full">
-            Completed tile progress: <span className={`${tile.completed ? "text-green-400" : "text-yellow-400"}`}>{bonusDataItem.bonus_progress} of {bonusDataItem.bonus_required}</span>
+            Completed tile progress: <span className={`${completed ? "text-green-400" : "text-yellow-400"}`}>{bonusDataItem.bonus_progress} of {bonusDataItem.bonus_required}</span>
           </div>
         }
         <img

@@ -45,7 +45,7 @@ class Bingo(commands.Cog):
 
     @app_commands.guilds(discord.Object(id=GUILD_ID))
     @commands.hybrid_command(
-        name="upload",
+        name="submit",
         description="Submit a tile completion",
     )
     @app_commands.describe(code_word="Your team's code word")

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { CogIcon } from '@heroicons/react/solid';
-import { BonusDataItem, Region, Tile } from './interfaces';
+import { AdminRegion, AdminTile, BonusDataItem, Region, Tile } from './interfaces';
 import GridTile from './GridTile';
 import usePayload from './usePayload';
 import GridTileModal from './GridTileModal';
@@ -29,8 +29,8 @@ export function App() {
   const [token, setToken] = useState(getInitialToken);
   const { payload, loading, error } = usePayload(token);
 
-  const [currentModal, setCurrentModal] = useState<{ tile?: Tile, bonusDataItem?: BonusDataItem } | null>(null)
-  const [showTokenInput, setShowTokenInput] = useState(false);
+  const [currentModal, setCurrentModal] = useState<{ tile?: Tile | AdminTile, bonusDataItem?: BonusDataItem } | null>(null)
+  const [showTokenInput, setShowTokenInput] = useState(!token);
 
   const handleTokenChange = (value: string) => {
     setToken(value);
@@ -41,7 +41,7 @@ export function App() {
     if (!payload)
       return {};
 
-    let res: Record<number, Region> = {};
+    let res: Record<number, Region | AdminRegion> = {};
     for (const region of payload!.regions)
       res[region.number] = region;
     return res;
@@ -53,6 +53,12 @@ export function App() {
 
     return payload["bonus_tiles"];
   }, [payload]);
+
+  const teamData = useMemo(() => {
+    return payload?.["team"];
+  }, [payload]);
+
+  console.log(teamData)
 
   return (
     <div className='relative w-full h-full'>
@@ -74,11 +80,16 @@ export function App() {
         <CogIcon className="w-5 h-5" />
       </button>
 
-
       <div className="min-h-screen bg-gray-900 p-8 flex flex-col items-center gap-4">
-        {!payload && <p className="text-xl text-yellow-200 mt-20">Enter your team token to view the board</p>}
+        {!token &&
+          <div className='text-yellow-400 text-center'>Showing public board, provide your team token to view your teams board</div>
+        }
 
-        {(!token || !!error || showTokenInput) && (
+        {!!teamData &&
+          <div className='text-white text-center'>Team {teamData["number"]}. {teamData["name"]} - <span className={`${teamData["score"] > 0 ? "text-green-400" : "text-yellow-400"}`}>{teamData["score"]}pts</span></div>
+        }
+
+        {showTokenInput && (
           <input
             type="text"
             value={token}
