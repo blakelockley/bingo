@@ -11,18 +11,14 @@ const REGIONS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 
 
 function getInitialToken(): string {
-  const saved = localStorage.getItem(TOKEN_STORAGE_KEY);
-  if (saved) return saved;
-
-  // Only fall back to a `?token=` in the URL when nothing is saved yet —
-  // localStorage always wins once it has something.
+  // A `?token=` in the URL always wins, overwriting whatever's saved.
   const urlToken = new URLSearchParams(window.location.search).get('token');
   if (urlToken) {
     localStorage.setItem(TOKEN_STORAGE_KEY, urlToken);
     return urlToken;
   }
 
-  return '';
+  return localStorage.getItem(TOKEN_STORAGE_KEY) ?? '';
 }
 
 export function App() {
