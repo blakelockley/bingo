@@ -28,10 +28,10 @@ TEAM_TOKENS = {
 }
 
 TEAM_NAMES = {
-    1: "The Happy Ol' Gooners (H.O.Gs)",
-    2: "Hoggers",
-    3: "Unknucky",
-    4: "Poop Dealers",
+    1: "CoxZukers",
+    2: "Small Wood Big Spirit",
+    3: "*aggot Kings",
+    4: "Imbued Sharts",
 }
 
 
