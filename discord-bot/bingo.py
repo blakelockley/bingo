@@ -7,8 +7,10 @@ from discord.ext import commands
 from sheets import SheetsAPI
 
 GUILD_ID = int(os.getenv("GUILD_ID", "532377514975428628"))
+TILE_SUBMISSION_CHANNEL_ID = int("1542502820375298068")
+
 MOD_SUBMISSION_CHANNEL_ID = int("1271294688313348147")
-TILE_SUBMISSION_CHANNEL_ID = int("1539403936602132530")
+BLAKOS_USER_ID = int("287392136851095563")
 
 TEAM_COLUMN_MAP = {
     1: "G",
@@ -18,10 +20,10 @@ TEAM_COLUMN_MAP = {
 }
 
 CODE_WORD = {
-    "bingo": 1,
-    "chonk": 2,
-    "trial": 3,
-    "quiet": 4,
+    "chewhogger": 1,
+    "ifyoureadthisurgay": 2,
+    "slayyyy": 3,
+    "stinkypinky": 4,
 }
 
 
@@ -153,7 +155,7 @@ class Bingo(commands.Cog):
                 embed = discord.Embed(
                     title=f"Team {team} has completed tile #{tile_number}!",
                     description=f"A new region has been unlocked for your team! {website_link}",
-                    color=discord.Color.gold(),
+                    color=discord.Color.green(),
                 )
             else:
                 embed = discord.Embed(
@@ -182,11 +184,11 @@ class Bingo(commands.Cog):
                 sheets.write(f"db!{column}{bonus_row}", "TRUE")
 
             if newly_completed_bonus_tiles:
-                bonus_names = ", ".join(t["name"] for t in newly_completed_bonus_tiles)
+                bonus_number = ", ".join(t["number"] for t in newly_completed_bonus_tiles)
                 embeds.append(
                     discord.Embed(
                         title=f"Team {team} has completed a bonus tile!",
-                        description=f"Team {team} has earnt a bonus point for completing the tile: {bonus_names}!",
+                        description=f"Team {team} has earnt a bonus point for completing the tile #{bonus_number}!",
                         color=discord.Color.purple(),
                     )
                 )
@@ -199,9 +201,14 @@ class Bingo(commands.Cog):
 
             await ctx.send(embeds=embeds, ephemeral=False)
 
-            await self.bot.get_channel(MOD_SUBMISSION_CHANNEL_ID).send(
-                embeds=[*embeds, *mod_embeds]
-            )
+            # NOTE: Send to Blakos only
+            user = await self.bot.fetch_user(BLAKOS_USER_ID)
+            await user.send(embeds=[*embeds, *mod_embeds])
+
+            # NOTE: Do not send to mods at the moment
+            # await self.bot.get_channel(MOD_SUBMISSION_CHANNEL_ID).send(
+            #     embeds=[*embeds, *mod_embeds]
+            # )
 
         else:
             embed = discord.Embed(
